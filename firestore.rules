@@ -1,0 +1,116 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // --- Helpers ---
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+    function incoming() {
+      return request.resource.data;
+    }
+    function existing() {
+      return resource.data;
+    }
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    // Role helpers (RBAC)
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+    function hasRole(roles) {
+      return isSignedIn() && getUserData().role in roles;
+    }
+    function isStaff() { return hasRole(['STAFF', 'MOD', 'ADMIN', 'OWNER']); }
+    function isMod() { return hasRole(['MOD', 'ADMIN', 'OWNER']); }
+    function isAdmin() { return hasRole(['ADMIN', 'OWNER']); }
+    function isOwnerAdmin() { return hasRole(['OWNER']); }
+
+    // --- Validation Blueprints ---
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'name', 'email', 'role', 'createdAt']) &&
+             data.uid is string && data.uid.size() <= 128 &&
+             data.name is string && data.name.size() <= 100 &&
+             data.email is string && data.email.size() <= 150 &&
+             data.role in ['USER', 'STAFF', 'MOD', 'ADMIN', 'OWNER'] &&
+             (data.role == 'USER' || (request.auth != null && request.auth.token.email.toLowerCase() == 'nxtawais95@gmail.com'));
+    }
+
+    function isValidApplication(data) {
+      return data.keys().hasAll(['applicantUid', 'applicantName', 'applicantEmail', 'discordUsername', 'category', 'position', 'status', 'createdAt', 'updatedAt']) &&
+             data.applicantUid == request.auth.uid;
+    }
+
+    function isValidReport(data) {
+      return data.keys().hasAll(['authorUid', 'authorName', 'authorEmail', 'reportType', 'subject', 'description', 'status', 'createdAt', 'updatedAt']) &&
+             data.authorUid == request.auth.uid;
+    }
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Users Collection
+    match /users/{userId} {
+      allow get: if isSignedIn() && (request.auth.uid == userId || isStaff());
+      allow list: if isStaff();
+      allow create: if isSignedIn() && request.auth.uid == userId && isValidUserProfile(incoming());
+      allow update: if isSignedIn() && (
+        (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'bio', 'photoURL', 'bannerURL', 'updatedAt', 'notificationsEnabled', 'lastSignInAt', 'providerId'])) ||
+        isAdmin()
+      );
+      allow delete: if isSignedIn() && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Applications Collection
+    match /applications/{appId} {
+      allow get: if isSignedIn() && (isOwner(existing().applicantUid) || isStaff());
+      allow list: if isStaff();
+      allow create: if isSignedIn() && isValidId(appId) && isValidApplication(incoming());
+      allow update: if isStaff() && incoming().diff(existing()).affectedKeys().hasOnly(['status', 'assignedReviewerUid', 'assignedReviewerName', 'assignmentStatus', 'assignedAt', 'reviewerUid', 'reviewerRole', 'reviewNotes', 'decisionAt', 'updatedAt']);
+      allow delete: if isAdmin();
+    }
+
+    // Reports Collection
+    match /reports/{reportId} {
+      allow get: if isSignedIn() && (isOwner(existing().authorUid) || isStaff());
+      allow list: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(reportId) && isValidReport(incoming());
+      allow update: if isStaff();
+      allow delete: if isSignedIn() && (isStaff() || isOwner(existing().authorUid));
+    }
+
+    // Notifications Collection
+    match /notifications/{notifId} {
+      allow read: if isSignedIn() && isOwner(resource.data.recipientUid);
+      allow create: if isStaff();
+      allow update: if isSignedIn() && isOwner(resource.data.recipientUid) && incoming().diff(existing()).affectedKeys().hasOnly(['read']);
+      allow delete: if isOwner(resource.data.recipientUid) || isAdmin();
+    }
+
+    // Audit Logs Collection
+    match /audit_logs/{logId} {
+      allow get: if isStaff();
+      allow list: if isAdmin();
+      allow create: if isSignedIn(); // Logged by client but checked by rules or just staff?
+      allow update, delete: if false;
+    }
+
+    // Settings Collection
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isOwnerAdmin();
+    }
+
+    // Diagnostic Test Collection
+    match /test/{docId} {
+      allow read: if true;
+    }
+  }
+}
