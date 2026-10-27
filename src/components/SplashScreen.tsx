@@ -9,35 +9,39 @@ interface SplashScreenProps {
 
 export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
   const [isVisible, setIsVisible] = useState(true);
+  const onCompleteRef = React.useRef(onComplete);
+  onCompleteRef.current = onComplete;
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(false);
-    }, 1800);
+    }, 1500);
 
-    const completeTimer = setTimeout(() => {
-      onComplete();
-    }, 2300);
+    // Fallback safety timer: ensures app never stays stuck on splash screen
+    const safetyTimer = setTimeout(() => {
+      onCompleteRef.current();
+    }, 2000);
 
     return () => {
       clearTimeout(timer);
-      clearTimeout(completeTimer);
+      clearTimeout(safetyTimer);
     };
-  }, [onComplete]);
+  }, []);
 
   return (
-    <AnimatePresence>
+    <AnimatePresence onExitComplete={() => onCompleteRef.current()}>
       {isVisible && (
         <motion.div
           initial={{ opacity: 1 }}
           exit={{ opacity: 0, scale: 1.05 }}
-          transition={{ duration: 0.5, ease: 'easeInOut' }}
-          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-canvas text-main"
+          transition={{ duration: 0.4, ease: 'easeInOut' }}
+          onClick={() => setIsVisible(false)}
+          className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-[#0a0e17] text-white cursor-pointer select-none"
         >
           <motion.div
             initial={{ scale: 0.8, opacity: 0, y: 10 }}
             animate={{ scale: 1, opacity: 1, y: 0 }}
-            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
             className="flex flex-col items-center justify-center space-y-5 text-center"
           >
             <motion.div
@@ -57,9 +61,9 @@ export const SplashScreen: React.FC<SplashScreenProps> = ({ onComplete }) => {
               <h1 className="text-2xl sm:text-3xl font-black tracking-tighter uppercase italic leading-none flex items-center justify-center gap-2 flex-wrap">
                 <span className="text-white">FLICK</span>
                 <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">STAFF APPLY</span>
-                <span className="text-secondary opacity-90">V2</span>
+                <span className="text-cyan-400 opacity-90">V2</span>
               </h1>
-              <p className="text-[10px] font-bold text-muted uppercase tracking-[0.3em]">
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.3em]">
                 Official Portal
               </p>
             </div>

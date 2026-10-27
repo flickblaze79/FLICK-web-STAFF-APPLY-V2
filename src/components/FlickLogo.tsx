@@ -15,13 +15,22 @@ export const FlickLogo: React.FC<FlickLogoProps> = ({ size = 'md', showText = tr
     '2xl': { img: 'w-28 h-28', text: 'text-4xl font-black', v2: 'text-lg -mt-2' },
   }[size];
 
+  const logoSrc = `${import.meta.env.BASE_URL}flick-logo.png`;
+
   return (
     <div className={`inline-flex items-center gap-3 select-none ${className}`}>
       <div className={`relative flex items-center justify-center shrink-0 overflow-hidden ${dimensions.img}`}>
         <img
-          src="/flick-logo.png"
+          src={logoSrc}
           alt="Flick Logo"
           className="w-full h-full object-contain"
+          onError={(e) => {
+            const img = e.currentTarget;
+            if (!img.dataset.fallback) {
+              img.dataset.fallback = 'true';
+              img.src = './flick-logo.png';
+            }
+          }}
         />
       </div>
 

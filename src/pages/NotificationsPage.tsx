@@ -220,7 +220,7 @@ export const NotificationsPage: React.FC = () => {
       try {
         new Notification('Flick Staff Apply V2', {
           body: bodyText,
-          icon: '/flick-logo.png',
+          icon: `${import.meta.env.BASE_URL}flick-logo.png`,
         });
       } catch (err) {
         console.warn('Notice sending test notification:', err);

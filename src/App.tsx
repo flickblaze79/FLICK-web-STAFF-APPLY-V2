@@ -38,9 +38,11 @@ function MainApp() {
     setSidebarOpen(false);
   };
 
+  const handleSplashComplete = React.useCallback(() => setShowSplash(false), []);
+
   // 1. SPLASH SCREEN DISPLAY (~2 SECONDS)
   if (showSplash) {
-    return <SplashScreen onComplete={() => setShowSplash(false)} />;
+    return <SplashScreen onComplete={handleSplashComplete} />;
   }
 
   // 2. AUTHENTICATION PAGE (if user is NOT logged in and hasn't chosen guest view)

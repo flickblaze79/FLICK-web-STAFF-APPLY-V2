@@ -11,18 +11,26 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('flick-theme');
-    return (saved as Theme) || 'dark';
+    try {
+      const saved = localStorage.getItem('flick-theme');
+      return (saved as Theme) || 'dark';
+    } catch {
+      return 'dark';
+    }
   });
 
   useEffect(() => {
-    const root = window.document.documentElement;
-    if (theme === 'light') {
-      root.classList.add('light');
-    } else {
-      root.classList.remove('light');
+    try {
+      const root = window.document.documentElement;
+      if (theme === 'light') {
+        root.classList.add('light');
+      } else {
+        root.classList.remove('light');
+      }
+      localStorage.setItem('flick-theme', theme);
+    } catch (e) {
+      console.warn('Storage notice in ThemeProvider:', e);
     }
-    localStorage.setItem('flick-theme', theme);
   }, [theme]);
 
   const toggleTheme = () => {
