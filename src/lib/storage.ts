@@ -1042,6 +1042,7 @@ export async function auditAndFixOwnerRoles(): Promise<number> {
       action: 'OWNER_ROLE_AUDIT',
       actorUid: 'SYSTEM',
       actorName: 'System Audit',
+      actorEmail: 'system@flick.gg',
       actorRole: 'OWNER',
       targetResource: 'users',
       targetUid: 'multiple',
