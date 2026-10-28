@@ -102,10 +102,10 @@ export const SignOutConfirmModal: React.FC<SignOutConfirmModalProps> = ({
           <div className="bg-amber-950/40 border border-amber-500/40 rounded-2xl p-4 space-y-2 relative z-10">
             <div className="flex items-center gap-2 text-xs font-black text-amber-300 uppercase tracking-wider">
               <ShieldAlert className="w-4 h-4 text-amber-400 shrink-0" />
-              <span>Sign Out Karta Waqt Warning</span>
+              <span>Sign Out Warning</span>
             </div>
             <p className="text-xs text-slate-300 leading-relaxed font-medium">
-              Kya aap waqai sign out karna chahte hain? Aapka active session end ho jayega aur unsaved changes zaya ho sakti hain.
+              Are you sure you want to sign out? Your active session will end, and any unsaved changes may be lost.
             </p>
             <p className="text-[11px] text-slate-400 leading-relaxed">
               Are you sure you want to sign out? You will need to log back in to review applications, submit staff reports, or edit your profile.
