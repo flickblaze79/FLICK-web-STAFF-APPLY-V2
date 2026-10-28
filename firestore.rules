@@ -38,7 +38,7 @@ service cloud.firestore {
              data.name is string && data.name.size() <= 100 &&
              data.email is string && data.email.size() <= 150 &&
              data.role in ['USER', 'STAFF', 'MOD', 'ADMIN', 'OWNER'] &&
-             (data.role == 'USER' || (request.auth != null && request.auth.token.email.toLowerCase() == 'nxtawais95@gmail.com'));
+             (data.role == 'USER' || (request.auth != null && request.auth.token.email.toLowerCase() == 'flickblaze7@gmail.com'));
     }
 
     function isValidApplication(data) {
