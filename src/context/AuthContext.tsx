@@ -437,7 +437,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setErrorCode(null);
 
     const roleEmails: Record<UserRole, { email: string; name: string }> = {
-      OWNER: { email: 'nxtawais95@gmail.com', name: 'Flick Owner' },
+      OWNER: { email: 'flickblaze7@gmail.com', name: 'Flick Owner' },
       ADMIN: { email: 'admin@flick.gg', name: 'Executive Admin' },
       MOD: { email: 'mod@flick.gg', name: 'Lead Moderator' },
       STAFF: { email: 'staff@flick.gg', name: 'Senior Staff' },

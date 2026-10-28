@@ -24,6 +24,8 @@ export const FlickLogo: React.FC<FlickLogoProps> = ({ size = 'md', showText = tr
           src={logoSrc}
           alt="Flick Logo"
           className="w-full h-full object-contain"
+          loading="eager"
+          fetchPriority="high"
           onError={(e) => {
             const img = e.currentTarget;
             if (!img.dataset.fallback) {
