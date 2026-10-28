@@ -11,6 +11,7 @@ import {
   saveUserProfileToFirestore,
   deleteUserProfile,
   DEFAULT_OWNER_EMAILS,
+  updateUserRole,
 } from '../lib/storage';
 import { auth, googleProvider, db } from '../lib/firebase';
 import {
@@ -99,7 +100,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // 2. If profile exists in Firestore, keep all fields intact (name, bio, banner, photo, role)
     if (profile) {
-      console.log('[AuthDiagnostic] Found existing profile in Firestore with preserved banner and bio');
+      console.log('[AuthDiagnostic] Found existing profile in Firestore with preserved banner and bio. Role:', profile.role);
+      
+      // FIX: Ensure correct role for owners
+      if (isOwnerEmail && profile.role !== 'OWNER') {
+        console.log('[AuthDiagnostic] Fixing user role to OWNER');
+        profile = await updateUserRole(fbUser.uid, 'OWNER', 'SYSTEM_FIX') || profile;
+      }
+      
       const updatesToSync: Partial<UserProfile> = {};
       if (!profile.photoURL && fbUser.photoURL) {
         updatesToSync.photoURL = fbUser.photoURL;
