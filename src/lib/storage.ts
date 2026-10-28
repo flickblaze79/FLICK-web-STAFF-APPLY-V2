@@ -21,7 +21,7 @@ const STORAGE_KEYS = {
   CURRENT_USER: 'flick_current_session',
 };
 
-export const DEFAULT_OWNER_EMAILS = ['flickblaze7@gmail.com', 'lostawais1@gmail.com'];
+export const DEFAULT_OWNER_EMAILS = ['flickblaze7@gmail.com'];
 
 // Initial Seed Data
 const SEED_USERS: UserProfile[] = [
