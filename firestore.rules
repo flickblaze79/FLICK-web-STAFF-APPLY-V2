@@ -62,7 +62,7 @@ service cloud.firestore {
       allow list: if isStaff();
       allow create: if isSignedIn() && request.auth.uid == userId && isValidUserProfile(incoming());
       allow update: if isSignedIn() && (
-        (request.auth.uid == userId && incoming().diff(existing()).affectedKeys().hasOnly(['name', 'bio', 'photoURL', 'bannerURL', 'updatedAt', 'notificationsEnabled', 'lastSignInAt', 'providerId'])) ||
+        (request.auth.uid == userId && !incoming().diff(existing()).affectedKeys().hasAny(['role', 'isSuspended', 'suspensionReason', 'suspensionDate', 'suspendedBy'])) ||
         isAdmin()
       );
       allow delete: if isSignedIn() && (request.auth.uid == userId || isAdmin());

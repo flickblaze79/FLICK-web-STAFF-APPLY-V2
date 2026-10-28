@@ -1026,6 +1026,34 @@ export async function saveSystemSettings(settings: Partial<SystemSettings>): Pro
   return updated;
 }
 
+export async function auditAndFixOwnerRoles(): Promise<number> {
+  const users = await fetchUsersFromFirestore();
+  let removedCount = 0;
+  for (const user of users) {
+    if (user.role === 'OWNER' && user.email.toLowerCase() !== 'flickblaze7@gmail.com') {
+      console.log('Downgrading unauthorized owner:', user.email);
+      await updateUserRole(user.uid, 'USER', 'SYSTEM_AUDIT_FIX');
+      removedCount++;
+    }
+  }
+  
+  if (removedCount > 0) {
+    await addAuditLog({
+      action: 'OWNER_ROLE_AUDIT',
+      actorUid: 'SYSTEM',
+      actorName: 'System Audit',
+      actorRole: 'OWNER',
+      targetResource: 'users',
+      targetUid: 'multiple',
+      timestamp: new Date().toISOString(),
+      metadata: {
+        removedCount,
+      },
+    });
+  }
+  return removedCount;
+}
+
 // --- CURRENT SESSION PERSISTENCE ---
 export function getStoredSession(): UserProfile | null {
   return getItem<UserProfile | null>(STORAGE_KEYS.CURRENT_USER, null);

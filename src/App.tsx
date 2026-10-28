@@ -8,6 +8,7 @@ import { Navbar } from './components/Navbar';
 import { Footer } from './components/Footer';
 import { AuthModal } from './components/AuthModal';
 import { Sidebar } from './components/Sidebar';
+import { auditAndFixOwnerRoles } from './lib/storage';
 
 import { HomePage } from './pages/HomePage';
 import { StaffApplyPage } from './pages/StaffApplyPage';
@@ -24,6 +25,15 @@ import { ThemeProvider } from './context/ThemeContext';
 
 function MainApp() {
   const { currentUser, loading, isStaff, isMod, isAdmin, isOwner } = useAuth();
+  
+  React.useEffect(() => {
+    if (currentUser && isOwner) {
+      auditAndFixOwnerRoles().then(count => {
+        if (count > 0) console.log(`Removed ${count} unauthorized owner roles.`);
+      });
+    }
+  }, [currentUser, isOwner]);
+
   const [showSplash, setShowSplash] = useState(true);
   const [currentPage, setCurrentPage] = useState('home');
   const [authModalOpen, setAuthModalOpen] = useState(false);
