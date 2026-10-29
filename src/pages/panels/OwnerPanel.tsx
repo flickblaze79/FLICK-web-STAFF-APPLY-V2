@@ -668,6 +668,7 @@ export const OwnerPanel: React.FC = () => {
                         <span>Delete</span>
                      </button>
                   </div>
+
                </div>
             </motion.div>
          </div>
