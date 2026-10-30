@@ -17,7 +17,10 @@ import {
   saveSystemSettings,
   fetchSystemSettings,
   fetchGlobalStats,
+  updateUserRole,
 } from '../../lib/storage';
+import { db } from '../../lib/firebase';
+import { doc, getDoc } from 'firebase/firestore';
 import { StaffApplication, UserProfile, UserRole, UserReport, AuditLogEntry, QUESTIONS, ApplicationCategory, SystemSettings } from '../../types';
 import { UserProfileDetailModal } from './UserProfileDetailModal';
 import { ReportMediaPreview } from '../../components/ReportMediaPreview';
@@ -95,6 +98,54 @@ export const OwnerPanel: React.FC = () => {
   const [deletingReportId, setDeletingReportId] = useState<string | null>(null);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [savingReportId, setSavingReportId] = useState<string | null>(null);
+
+  const [firestoreRole, setFirestoreRole] = useState<string>('Loading...');
+  const [verifyingOwner, setVerifyingOwner] = useState<boolean>(false);
+
+  const checkFirestoreRole = async () => {
+    if (!currentUser?.uid) return;
+    try {
+      const snap = await getDoc(doc(db, 'users', currentUser.uid));
+      if (snap.exists()) {
+        const data = snap.data();
+        setFirestoreRole(data.role || 'UNKNOWN');
+      } else {
+        setFirestoreRole('Document Not Found');
+      }
+    } catch (err) {
+      setFirestoreRole('Error Fetching');
+    }
+  };
+
+  const handleVerifyOwner = async () => {
+    if (!currentUser) return;
+    setVerifyingOwner(true);
+    try {
+      const snap = await getDoc(doc(db, 'users', currentUser.uid));
+      let role = snap.exists() ? snap.data().role : null;
+
+      if (currentUser.email?.toLowerCase() === 'flickblaze7@gmail.com') {
+        if (role !== 'OWNER') {
+          console.log('[Diagnostic] Forcing OWNER role assignment for flickblaze7@gmail.com');
+          await updateUserRole(currentUser.uid, 'OWNER', 'DIAGNOSTIC_PANEL_VERIFY');
+          role = 'OWNER';
+        }
+      }
+      setFirestoreRole(role || 'UNKNOWN');
+      alert(`Diagnostic Verification Successful!\nAuth UID: ${currentUser.uid}\nFirestore Role: ${role}\nEmail: ${currentUser.email}`);
+      window.location.reload();
+    } catch (err: any) {
+      alert('Verification error: ' + (err?.message || 'Unknown error'));
+    } finally {
+      setVerifyingOwner(false);
+    }
+  };
+
+  useEffect(() => {
+    if (currentUser) {
+      checkFirestoreRole();
+    }
+  }, [currentUser]);
 
   const loadOwnerData = async () => {
     setLoadingInitial(true);
@@ -335,6 +386,28 @@ export const OwnerPanel: React.FC = () => {
       <AnimatePresence mode="wait">
         {activeTab === 'dashboard' && (
           <motion.div key="dash" initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }} className="space-y-8">
+            <div className="bg-panel border border-amber-400/40 rounded-[2rem] p-6 shadow-2xl space-y-4 relative overflow-hidden">
+               <div className="absolute top-0 right-0 p-6 opacity-5"><Crown className="w-32 h-32 text-amber-300" /></div>
+               <div className="flex items-center justify-between flex-wrap gap-4 relative z-10">
+                  <div className="space-y-1">
+                     <div className="text-xs font-black text-amber-300 uppercase tracking-widest flex items-center gap-2">
+                        <Shield className="w-4 h-4" /> Owner Security & Role Diagnostic Panel
+                     </div>
+                     <div className="text-xs text-slate-300 font-mono">Auth UID: <span className="text-cyan-400">{currentUser?.uid || 'N/A'}</span></div>
+                     <div className="text-xs text-slate-300 font-mono">Firestore Document Role: <span className="text-emerald-400 font-bold">{firestoreRole}</span></div>
+                     <div className="text-xs text-slate-300 font-mono">Email: <span className="text-white">{currentUser?.email || 'N/A'}</span></div>
+                  </div>
+                  <button
+                     onClick={handleVerifyOwner}
+                     disabled={verifyingOwner}
+                     className="px-5 py-3 bg-amber-400 hover:bg-amber-300 text-black font-black uppercase text-xs rounded-xl shadow-lg shadow-amber-400/20 transition-all flex items-center gap-2 disabled:opacity-50"
+                  >
+                     {verifyingOwner ? <RefreshCw className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                     <span>Verify Owner</span>
+                  </button>
+               </div>
+            </div>
+
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
               <div className="bg-panel border border-secondary/30 p-6 rounded-3xl space-y-2 shadow-xl hover:border-amber-400/20 transition-all">
                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Total Users</span>
