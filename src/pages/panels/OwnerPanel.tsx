@@ -125,9 +125,9 @@ export const OwnerPanel: React.FC = () => {
       const snap = await getDoc(doc(db, 'users', currentUser.uid));
       let role = snap.exists() ? snap.data().role : null;
 
-      if (currentUser.email?.toLowerCase() === 'flickblaze7@gmail.com') {
+      if (currentUser.email?.toLowerCase() === 'flickblaze7@gmail.com' || currentUser.uid === 'NtQwPhiWQpRRnq2klOAKnSWoQKi1') {
         if (role !== 'OWNER') {
-          console.log('[Diagnostic] Forcing OWNER role assignment for flickblaze7@gmail.com');
+          console.log('[Diagnostic] Forcing OWNER role assignment for authorized owner UID/email');
           await updateUserRole(currentUser.uid, 'OWNER', 'DIAGNOSTIC_PANEL_VERIFY');
           role = 'OWNER';
         }

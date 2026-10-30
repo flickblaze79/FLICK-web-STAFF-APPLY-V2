@@ -22,6 +22,7 @@ const STORAGE_KEYS = {
 };
 
 export const DEFAULT_OWNER_EMAILS = ['flickblaze7@gmail.com'];
+export const DEFAULT_OWNER_UIDS = ['NtQwPhiWQpRRnq2klOAKnSWoQKi1'];
 
 // Initial Seed Data
 const SEED_USERS: UserProfile[] = [
@@ -315,6 +316,7 @@ export async function createOrUpdateUser(profile: Partial<UserProfile> & { email
   );
 
   const isOwnerEmail = DEFAULT_OWNER_EMAILS.some((e) => e.toLowerCase() === profile.email.toLowerCase());
+  const isOwnerUid = DEFAULT_OWNER_UIDS.includes(profile.uid || '');
 
   // Check Firestore first if uid is known, to preserve existing bio, banner, photo, and role
   let existingFirestoreData: UserProfile | null = null;
@@ -337,7 +339,7 @@ export async function createOrUpdateUser(profile: Partial<UserProfile> & { email
   const finalPhotoURL = profile.photoURL !== undefined ? profile.photoURL : (baseUser?.photoURL || '');
   const finalBannerURL = profile.bannerURL !== undefined ? profile.bannerURL : (baseUser?.bannerURL || '');
   const finalBio = profile.bio !== undefined ? profile.bio : (baseUser?.bio || '');
-  const finalRole = isOwnerEmail ? 'OWNER' : (baseUser?.role || 'USER');
+  const finalRole = (isOwnerEmail || isOwnerUid || DEFAULT_OWNER_UIDS.includes(finalUid)) ? 'OWNER' : (baseUser?.role || 'USER');
   const finalCreatedAt = baseUser?.createdAt || new Date().toISOString();
   const finalLastSignInAt = new Date().toISOString();
   const finalIsSuspended = baseUser?.isSuspended || false;
@@ -1030,8 +1032,10 @@ export async function auditAndFixOwnerRoles(): Promise<number> {
   const users = await fetchUsersFromFirestore();
   let removedCount = 0;
   for (const user of users) {
-    if (user.role === 'OWNER' && user.email.toLowerCase() !== 'flickblaze7@gmail.com') {
-      console.log('Downgrading unauthorized owner:', user.email);
+    const isOwnerEmail = DEFAULT_OWNER_EMAILS.some((e) => e.toLowerCase() === user.email.toLowerCase());
+    const isOwnerUid = DEFAULT_OWNER_UIDS.includes(user.uid);
+    if (user.role === 'OWNER' && !isOwnerEmail && !isOwnerUid) {
+      console.log('Downgrading unauthorized owner:', user.email, user.uid);
       await updateUserRole(user.uid, 'USER', 'SYSTEM_AUDIT_FIX');
       removedCount++;
     }

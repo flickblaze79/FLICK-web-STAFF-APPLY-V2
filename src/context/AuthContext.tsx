@@ -11,6 +11,7 @@ import {
   saveUserProfileToFirestore,
   deleteUserProfile,
   DEFAULT_OWNER_EMAILS,
+  DEFAULT_OWNER_UIDS,
   updateUserRole,
 } from '../lib/storage';
 import { auth, googleProvider, db } from '../lib/firebase';
@@ -92,8 +93,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const activeEmail = fbUser.email?.toLowerCase() || '';
     const activeName = fbUser.displayName || activeEmail.split('@')[0] || 'User';
     const isOwnerEmail = DEFAULT_OWNER_EMAILS.some((e) => e.toLowerCase() === activeEmail);
+    const isOwnerUid = DEFAULT_OWNER_UIDS.includes(fbUser.uid);
+    const isOwnerAuthorized = isOwnerEmail || isOwnerUid;
 
-    console.log('[AuthDiagnostic] Processing user:', fbUser.uid, activeEmail);
+    console.log('[AuthDiagnostic] Processing user:', fbUser.uid, activeEmail, 'isOwner:', isOwnerAuthorized);
 
     // 1. Fetch live profile from Firestore or local storage cache
     let profile: UserProfile | null = await fetchUserProfileFromFirestore(fbUser.uid);
@@ -103,8 +106,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       console.log('[AuthDiagnostic] Found existing profile in Firestore with preserved banner and bio. Role:', profile.role);
       
       // FIX: Ensure correct role for owners
-      if (isOwnerEmail && profile.role !== 'OWNER') {
-        console.log('[AuthDiagnostic] Fixing user role to OWNER');
+      if (isOwnerAuthorized && profile.role !== 'OWNER') {
+        console.log('[AuthDiagnostic] Fixing user role to OWNER for authorized owner');
         profile = await updateUserRole(fbUser.uid, 'OWNER', 'SYSTEM_FIX') || profile;
       }
       
