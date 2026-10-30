@@ -35,11 +35,13 @@ import {
   ShieldAlert,
   Moon,
   Sun,
+  Crown,
 } from 'lucide-react';
 import { useTheme } from '../context/ThemeContext';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../lib/firebase';
 import { uploadFile } from '../lib/upload';
+import { updateUserRole } from '../lib/storage';
 import {
   compressAvatarImage,
   cropAndCompressBanner,
@@ -105,6 +107,26 @@ export const AccountPage: React.FC = () => {
   const [resetMessage, setResetMessage] = useState<string | null>(null);
   const [sendingReset, setSendingReset] = useState(false);
   const [copiedUid, setCopiedUid] = useState(false);
+  const [claimingOwner, setClaimingOwner] = useState(false);
+  const [claimOwnerMessage, setClaimOwnerMessage] = useState<string | null>(null);
+
+  const handleClaimOwner = async () => {
+    if (!currentUser) return;
+    setClaimingOwner(true);
+    setClaimOwnerMessage(null);
+    try {
+      await updateUserRole(currentUser.uid, 'OWNER', 'ACCOUNT_CLAIM');
+      await refreshProfile();
+      setClaimOwnerMessage('Owner role successfully claimed and synchronized!');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (err: any) {
+      setClaimOwnerMessage('Failed to claim owner role: ' + (err?.message || 'Permission denied'));
+    } finally {
+      setClaimingOwner(false);
+    }
+  };
 
   // Delete Account Modal States
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -1061,6 +1083,68 @@ export const AccountPage: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* AUTHORIZED OWNER CLAIM & VERIFY CARD */}
+        {(currentUser.email?.toLowerCase() === 'flickblaze7@gmail.com' || currentUser.uid === 'NtQwPhiWQpRRnq2klOAKnSWoQKi1') && (
+          <div className="bg-panel border border-amber-400/50 rounded-3xl p-6 sm:p-7 space-y-6 shadow-xl lg:col-span-2 bg-gradient-to-r from-amber-950/20 via-panel to-panel">
+            <div className="flex items-center justify-between border-b border-amber-500/30 pb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2.5 bg-amber-500/20 border border-amber-500/40 text-amber-300 rounded-2xl">
+                  <Crown className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-black text-white uppercase tracking-wider">
+                    Supreme Owner Verification
+                  </h3>
+                  <p className="text-xs text-amber-300/80 font-medium">
+                    Authorized Owner account detected: {currentUser.email}
+                  </p>
+                </div>
+              </div>
+              <span className="text-[10px] font-black uppercase px-2.5 py-1 bg-amber-950 text-amber-300 border border-amber-700 rounded-full flex items-center gap-1">
+                <ShieldCheck className="w-3 h-3 text-amber-400" />
+                Authorized
+              </span>
+            </div>
+
+            <div className="space-y-4">
+              {claimOwnerMessage && (
+                <div className="p-3.5 bg-amber-950/90 border border-amber-600 rounded-xl text-amber-200 text-xs flex items-center gap-2">
+                  <CheckCircle2 className="w-4 h-4 text-amber-400 shrink-0" />
+                  <span className="font-bold leading-relaxed">{claimOwnerMessage}</span>
+                </div>
+              )}
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-canvas/60 p-4 rounded-2xl border border-secondary/20">
+                <div>
+                  <span className="text-xs font-bold text-white block">Current Firestore Role: <span className="text-amber-400 uppercase font-black">{userProfile.role}</span></span>
+                  <p className="text-xs text-slate-400 mt-0.5">If your role is not currently OWNER, click below to force-sync and claim your Supreme Ownership privileges.</p>
+                </div>
+                <button
+                  onClick={handleClaimOwner}
+                  disabled={claimingOwner || userProfile.role === 'OWNER'}
+                  className="px-6 py-3.5 bg-amber-400 hover:bg-amber-300 text-slate-950 font-black text-xs uppercase tracking-wider rounded-2xl shadow-lg transition-all flex items-center gap-2 disabled:opacity-50 shrink-0"
+                >
+                  {claimingOwner ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin text-slate-950" />
+                      <span>Syncing Owner Role...</span>
+                    </>
+                  ) : userProfile.role === 'OWNER' ? (
+                    <>
+                      <CheckCircle2 className="w-4 h-4 text-slate-950" />
+                      <span>Owner Role Active</span>
+                    </>
+                  ) : (
+                    <>
+                      <Crown className="w-4 h-4 text-slate-950" />
+                      <span>Claim Owner Role Now</span>
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* CARD B: SECURITY & AUTHENTICATION CONTROLS (FIREBASE AUTH RESET LINK) */}
         <div className="bg-panel border border-secondary/30 rounded-3xl p-6 sm:p-7 space-y-6 shadow-xl flex flex-col justify-between">
