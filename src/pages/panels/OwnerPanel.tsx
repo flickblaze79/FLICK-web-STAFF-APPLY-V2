@@ -24,6 +24,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { StaffApplication, UserProfile, UserRole, UserReport, AuditLogEntry, QUESTIONS, ApplicationCategory, SystemSettings } from '../../types';
 import { UserProfileDetailModal } from './UserProfileDetailModal';
 import { ReportMediaPreview } from '../../components/ReportMediaPreview';
+import { SystemHealthPanel } from '../../components/SystemHealthPanel';
 import { checkAndProcessAutoRejections } from '../../lib/autoReject';
 import {
   Crown,
@@ -426,6 +427,9 @@ export const OwnerPanel: React.FC = () => {
                 <div className="text-3xl font-black text-emerald-400">{loadingStats ? '...' : stats.acceptedApps}</div>
               </div>
             </div>
+
+            <SystemHealthPanel />
+
             <div className="bg-panel border border-secondary/30 rounded-[2rem] p-6 space-y-4 shadow-2xl">
                <h3 className="text-sm font-black text-white uppercase tracking-widest flex items-center gap-2 px-2"><Activity className="w-5 h-5 text-amber-300" /> Recent System Audit</h3>
                <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
