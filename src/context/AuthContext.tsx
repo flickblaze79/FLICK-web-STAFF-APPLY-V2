@@ -132,7 +132,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           photoURL: fbUser.photoURL || '',
           bannerURL: '',
           bio: '',
-          role: isOwnerEmail ? 'OWNER' : 'USER',
+          role: isOwnerAuthorized ? 'OWNER' : 'USER',
           providerId: fbUser.providerData[0]?.providerId || 'google.com',
         });
         console.log('[AuthDiagnostic] Initial profile document created successfully');
@@ -145,7 +145,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           photoURL: fbUser.photoURL || '',
           bannerURL: '',
           bio: '',
-          role: isOwnerEmail ? 'OWNER' : 'USER',
+          role: isOwnerAuthorized ? 'OWNER' : 'USER',
           createdAt: new Date().toISOString(),
           lastSignInAt: new Date().toISOString(),
           isSuspended: false,
