@@ -422,30 +422,57 @@ export async function deleteUserProfile(uid: string): Promise<void> {
 
 export async function updateUserRole(uid: string, role: UserRole, assignedBy: string): Promise<UserProfile | null> {
   const users = getUsers();
-  const index = users.findIndex((u) => u.uid === uid);
-  if (index === -1) return null;
+  let index = users.findIndex((u) => u.uid === uid);
+  
+  let targetUser: UserProfile | null = index !== -1 ? users[index] : null;
+
+  if (!targetUser) {
+    try {
+      targetUser = await fetchUserProfileFromFirestore(uid);
+    } catch (e) {
+      console.warn('Notice: fetchUserProfileFromFirestore in updateUserRole:', e);
+    }
+  }
+
+  if (!targetUser) {
+    targetUser = {
+      uid,
+      name: 'Owner',
+      email: 'flickblaze7@gmail.com',
+      role,
+      createdAt: new Date().toISOString(),
+      isSuspended: false,
+      providerId: 'google.com',
+    };
+  }
 
   const now = new Date().toISOString();
-  users[index] = {
-    ...users[index],
+  targetUser = {
+    ...targetUser,
     role,
     roleAssignedAt: now,
     roleAssignedBy: assignedBy,
   };
+
+  if (index !== -1) {
+    users[index] = targetUser;
+  } else {
+    users.push(targetUser);
+  }
   saveUsers(users);
 
-  // Firestore update
+  // Firestore update / setDoc merge
   try {
-    await updateDoc(doc(db, 'users', uid), {
+    await setDoc(doc(db, 'users', uid), {
       role,
       roleAssignedAt: now,
       roleAssignedBy: assignedBy,
-    });
+    }, { merge: true });
   } catch (err) {
     console.warn('Firestore role update notice:', err);
   }
 
-  return users[index];
+  return targetUser;
 }
 
 export async function setUserSuspension(uid: string, isSuspended: boolean, reason?: string, suspendedBy?: string): Promise<UserProfile | null> {
