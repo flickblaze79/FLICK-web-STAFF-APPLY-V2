@@ -18,6 +18,7 @@ import {
   fetchSystemSettings,
   fetchGlobalStats,
   updateUserRole,
+  deleteAllApplications,
 } from '../../lib/storage';
 import { db } from '../../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
@@ -322,7 +323,9 @@ export const OwnerPanel: React.FC = () => {
       
       const matchCategory = appCategoryFilter === 'All' || app.category === appCategoryFilter;
       
-      const matchStatus = appStatusFilter === 'All' || app.status === appStatusFilter;
+      const matchStatus = appStatusFilter === 'All'
+        ? (app.status === 'Pending' || app.status === 'Under Review')
+        : app.status === appStatusFilter;
 
       return matchSearch && matchCategory && matchStatus;
     });

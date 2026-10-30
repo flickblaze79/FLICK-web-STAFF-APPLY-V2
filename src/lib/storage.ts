@@ -565,47 +565,32 @@ export async function updateApplication(id: string, updates: Partial<StaffApplic
 
 export function checkAndProcessAutoRejectionsLocal(): number {
   const apps = getApplications();
-  const AUTO_REJECT_MS = 48 * 60 * 60 * 1000; // 48 Hours
+  const AUTO_DELETE_MS = 24 * 60 * 60 * 1000; // 24 Hours / 1 Day
   const now = Date.now();
-  let processedCount = 0;
 
-  const updatedApps = apps.map((app) => {
-    if (app.status === 'Pending' || app.status === 'Under Review') {
+  const filteredApps = apps.filter((app) => {
+    if (app.status === 'Pending') {
       const createdAtMs = new Date(app.createdAt).getTime();
-      if (now - createdAtMs >= AUTO_REJECT_MS) {
-        processedCount++;
-        const decisionAt = new Date().toISOString();
-        const reason = 'Automatically rejected after 48 hours without a final decision.';
-
-        // Add notification for applicant
+      if (now - createdAtMs >= AUTO_DELETE_MS) {
         addNotification({
           recipientUid: app.applicantUid,
-          title: 'Application Decision: Rejected (Expired)',
-          message: `Your application for ${app.position} was automatically rejected after 48 hours without a final decision.`,
+          title: 'Application Expired & Removed',
+          message: `Your application for ${app.position} was automatically removed after 24 hours without review.`,
           type: 'application',
           read: false,
-          createdAt: decisionAt,
+          createdAt: new Date().toISOString(),
         });
-
-        return {
-          ...app,
-          status: 'Rejected' as const,
-          reviewNotes: reason,
-          reviewerRole: 'SYSTEM' as const,
-          autoRejected: true,
-          autoRejectionReason: reason,
-          decisionAt,
-          updatedAt: decisionAt,
-        };
+        return false; // remove / delete
       }
     }
-    return app;
+    return true;
   });
 
-  if (processedCount > 0) {
-    saveApplications(updatedApps);
+  const deletedCount = apps.length - filteredApps.length;
+  if (deletedCount > 0) {
+    saveApplications(filteredApps);
   }
-  return processedCount;
+  return deletedCount;
 }
 
 // --- REPORTS MANAGEMENT ---
@@ -1100,3 +1085,15 @@ export function saveStoredSession(user: UserProfile | null): void {
     }
   }
 }
+
+export async function deleteAllApplications(): Promise<void> {
+  saveApplications([]);
+  try {
+    const snap = await getDocs(collection(db, 'applications'));
+    const deletePromises = snap.docs.map((docSnap) => deleteDoc(doc(db, 'applications', docSnap.id)));
+    await Promise.all(deletePromises);
+  } catch (err) {
+    console.warn('Error deleting all applications from Firestore:', err);
+  }
+}
+
