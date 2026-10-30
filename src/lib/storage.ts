@@ -569,18 +569,18 @@ export function checkAndProcessAutoRejectionsLocal(): number {
   const now = Date.now();
 
   const filteredApps = apps.filter((app) => {
-    if (app.status === 'Pending') {
-      const createdAtMs = new Date(app.createdAt).getTime();
-      if (now - createdAtMs >= AUTO_DELETE_MS) {
+    if (app.status === 'Pending' || app.status === 'Under Review') {
+      const lastActivityTime = new Date(app.updatedAt || app.createdAt).getTime();
+      if (now - lastActivityTime >= AUTO_DELETE_MS) {
         addNotification({
           recipientUid: app.applicantUid,
           title: 'Application Expired & Removed',
-          message: `Your application for ${app.position} was automatically removed after 24 hours without review.`,
+          message: `Your application for ${app.position} in status '${app.status}' was automatically removed after 24 hours without further action.`,
           type: 'application',
           read: false,
           createdAt: new Date().toISOString(),
         });
-        return false; // remove / delete
+        return false; // delete
       }
     }
     return true;
