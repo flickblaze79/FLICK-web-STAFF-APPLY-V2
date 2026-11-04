@@ -136,7 +136,7 @@ export const SystemHealthPanel: React.FC = () => {
             </span>
           </div>
           <div className="text-xl font-black text-white">{health.firestoreLatencyMs} ms <span className="text-xs text-slate-400 font-normal">latency</span></div>
-          <div className="text-[10px] text-slate-500 font-mono">Region: Cloud Firestore Enterprise</div>
+          <div className="text-[10px] text-slate-500 font-mono">Region: Cloud Firestore (Default)</div>
         </div>
 
         {/* Auth Status */}

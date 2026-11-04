@@ -18,6 +18,7 @@ import {
 import { StaffApplication, UserReport, AuditLogEntry, QUESTIONS } from '../../types';
 import { checkAndProcessAutoRejections } from '../../lib/autoReject';
 import { ReportMediaPreview } from '../../components/ReportMediaPreview';
+import { StaffPerformanceDashboard } from '../../components/StaffPerformanceDashboard';
 import {
   Hammer,
   Filter,
@@ -346,6 +347,14 @@ export const ModPanel: React.FC = () => {
       <AnimatePresence mode="wait">
         {activeTab === 'dashboard' && (
           <motion.div key="dash" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
+             <StaffPerformanceDashboard
+               applications={applications}
+               reports={reports}
+               auditLogs={auditLogs}
+               currentUserName={userProfile?.name || currentUser?.email || 'Moderator'}
+               currentRole={userProfile?.role || 'MOD'}
+             />
+
              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="bg-panel border border-secondary/30 p-6 rounded-3xl space-y-2 shadow-xl">
                    <span className="text-xs font-bold text-slate-400 uppercase tracking-widest block">Open Reports</span>

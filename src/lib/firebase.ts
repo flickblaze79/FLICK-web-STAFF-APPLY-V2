@@ -89,3 +89,16 @@ async function testConnection() {
 }
 
 testConnection();
+
+export const isFirebaseEnabled = (): boolean => {
+  if (typeof window === 'undefined') return true;
+  return localStorage.getItem('flick_firebase_off') !== 'true';
+};
+
+export const setFirebaseEnabled = (enabled: boolean): void => {
+  if (typeof window !== 'undefined') {
+    localStorage.setItem('flick_firebase_off', enabled ? 'false' : 'true');
+    window.location.reload();
+  }
+};
+

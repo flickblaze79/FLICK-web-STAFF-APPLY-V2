@@ -20,12 +20,13 @@ import {
   updateUserRole,
   deleteAllApplications,
 } from '../../lib/storage';
-import { db } from '../../lib/firebase';
+import { db, isFirebaseEnabled, setFirebaseEnabled } from '../../lib/firebase';
 import { doc, getDoc } from 'firebase/firestore';
 import { StaffApplication, UserProfile, UserRole, UserReport, AuditLogEntry, QUESTIONS, ApplicationCategory, SystemSettings } from '../../types';
 import { UserProfileDetailModal } from './UserProfileDetailModal';
 import { ReportMediaPreview } from '../../components/ReportMediaPreview';
 import { SystemHealthPanel } from '../../components/SystemHealthPanel';
+import { DeploymentHealthChecker } from '../../components/DeploymentHealthChecker';
 import { checkAndProcessAutoRejections } from '../../lib/autoReject';
 import {
   Crown,
@@ -57,6 +58,7 @@ import {
   AlertTriangle,
   Moon,
   Sun,
+  Cpu,
 } from 'lucide-react';
 import { useTheme } from '../../context/ThemeContext';
 
@@ -64,7 +66,7 @@ export const OwnerPanel: React.FC = () => {
   const { currentUser, userProfile: currentUserProfile, isOwner } = useAuth();
   const { theme, toggleTheme } = useTheme();
 
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'reports' | 'applications' | 'settings'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'users' | 'reports' | 'applications' | 'settings' | 'health'>('dashboard');
 
   const [users, setUsers] = useState<UserProfile[]>([]);
   const [applications, setApplications] = useState<StaffApplication[]>([]);
@@ -384,6 +386,10 @@ export const OwnerPanel: React.FC = () => {
             <Settings className="w-4 h-4" />
             <span>Settings</span>
           </button>
+          <button onClick={() => setActiveTab('health')} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-black uppercase transition-all ${activeTab === 'health' ? 'bg-amber-400 text-black shadow-lg shadow-amber-400/20' : 'text-slate-300 hover:text-white'}`}>
+            <Cpu className="w-4 h-4" />
+            <span>Deployment Health</span>
+          </button>
         </nav>
       </div>
 
@@ -682,6 +688,12 @@ export const OwnerPanel: React.FC = () => {
                     })}
                  </div>
               </div>
+           </motion.div>
+        )}
+
+        {activeTab === 'health' && (
+           <motion.div key="health" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} className="max-w-4xl mx-auto py-8">
+              <DeploymentHealthChecker />
            </motion.div>
         )}
       </AnimatePresence>
